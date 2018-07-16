@@ -57,13 +57,13 @@ The pre-trained model, [model/trained-model.pt](model/trained-model.pt), was tra
 3. 300 x 300, with ReLU activation
 4. 300 x 1, with sigmoid activation
 
-The model was trained for approx. 7,000 iterations before stopping due to time constraints, using the Adam optimiser with 1e-4 learn rate, gamma = 0.99 discount factor, a batch size of 25, and negative log loss.
+The model was trained for approx. 4,000 episodes before stopping due to time constraints, using the Adam optimiser with 1e-4 learn rate, gamma = 0.99 discount factor, a batch size of 25, and negative log loss. The model with the best median batch performance was selected.
 
 The state is retrieved from PyGame as a 288 x 512 matrix, before being chopped to a 288 x 400 matrix to remove the ground below the pipes, and then downsampled to a quarter the size, giving 72 x 100.
 
 The output is the probability of flapping given the input state.
 
-Here's the graph of survival time vs number of episodes during training:
+Here's the graph of survival time vs number of episodes during training (apologies for whitewashed colours, will be fixed ASAP):
 
 ![Training Graph](training-graph.png)
 

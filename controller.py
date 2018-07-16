@@ -161,7 +161,7 @@ def main(num_episodes=500000):
             batch_median = np.median(batch_final_rewards)
             # If current model has best median performance, save:
             if batch_median > best_batch_median:
-                print('New best batch median {:.0f} (previously {:.0f}), saving network weights.'.format(batch_median, best_batch_median))
+                print('New best batch median {:.1f} (previously {:.1f}), saving network weights.'.format(batch_median, best_batch_median))
                 best_batch_median = batch_median
 
                 state = {
