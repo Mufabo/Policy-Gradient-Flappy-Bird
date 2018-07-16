@@ -1,16 +1,24 @@
 from itertools import cycle
 import random
 import sys
-
 import pygame
 from pygame.locals import *
 
+# NOTE:
+#   Modifications made by myself (Daniel Crane) include:
+#       * Removed all sounds from playing
+#       * Replaced background and floor with black textures
+#       * Fixed bird colour and pipe colours, previously random
+#       ** Made score only display when done, was obstructing view previously
+#       ** Changed input method from using keyboard, to using input_queue
+#       ** State, reward, and done status are outputted into output_queue
+#       *** Fixed a bug where flying too far over the pipes wouldn't count as crashing
 
 FPS = 30
 SCREENWIDTH  = 288
 SCREENHEIGHT = 512
 # amount by which base can maximum shift to left
-PIPEGAPSIZE  = 100 # gap between upper and lower part of pipe
+PIPEGAPSIZE  = 150 # gap between upper and lower part of pipe
 BASEY        = SCREENHEIGHT * 0.79
 # image, sound and hitmask  dicts
 IMAGES, SOUNDS, HITMASKS = {}, {}, {}
@@ -57,8 +65,12 @@ except NameError:
     xrange = range
 
 
-def main():
-    global SCREEN, FPSCLOCK
+def main(mode_, in_q, out_q):
+    global SCREEN, FPSCLOCK, mode, input_queue, output_queue
+    # This is done to make the queues accessible to child functions:
+    input_queue, output_queue = in_q, out_q
+    mode = mode_
+
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
     SCREEN = pygame.display.set_mode((SCREENWIDTH, SCREENHEIGHT))
@@ -83,9 +95,12 @@ def main():
     # message sprite for welcome screen
     IMAGES['message'] = pygame.image.load('assets/sprites/message.png').convert_alpha()
     # base (ground) sprite
-    IMAGES['base'] = pygame.image.load('assets/sprites/base.png').convert_alpha()
+    if mode == 'test':
+        IMAGES['base'] = pygame.image.load('assets/sprites/base.png').convert_alpha()
+    else:
+        IMAGES['base'] = pygame.image.load('assets/sprites/base-test.png').convert_alpha()
 
-    # sounds
+    # SOUNDS
     if 'win' in sys.platform:
         soundExt = '.wav'
     else:
@@ -98,20 +113,24 @@ def main():
     SOUNDS['wing']   = pygame.mixer.Sound('assets/audio/wing' + soundExt)
 
     while True:
-        # select random background sprites
-        randBg = random.randint(0, len(BACKGROUNDS_LIST) - 1)
-        IMAGES['background'] = pygame.image.load(BACKGROUNDS_LIST[randBg]).convert()
+        # select random background, player, pipe sprites if in 'test' mode:
+        if mode == 'test':
+            randPlayer = random.randint(0, len(PLAYERS_LIST) - 1)
+            randBg = random.randint(0, len(BACKGROUNDS_LIST) - 1)
+            pipeindex = random.randint(0, len(PIPES_LIST) - 1)
+            IMAGES['background'] = pygame.image.load(BACKGROUNDS_LIST[randBg]).convert()
+        else:
+            randPlayer = 0
+            pipeindex = 0
+            IMAGES['background'] = pygame.image.load('assets/sprites/background-test.png').convert()
 
-        # select random player sprites
-        randPlayer = random.randint(0, len(PLAYERS_LIST) - 1)
+
         IMAGES['player'] = (
             pygame.image.load(PLAYERS_LIST[randPlayer][0]).convert_alpha(),
             pygame.image.load(PLAYERS_LIST[randPlayer][1]).convert_alpha(),
             pygame.image.load(PLAYERS_LIST[randPlayer][2]).convert_alpha(),
         )
 
-        # select random pipe sprites
-        pipeindex = random.randint(0, len(PIPES_LIST) - 1)
         IMAGES['pipe'] = (
             pygame.transform.rotate(
                 pygame.image.load(PIPES_LIST[pipeindex]).convert_alpha(), 180),
@@ -158,18 +177,21 @@ def showWelcomeAnimation():
     playerShmVals = {'val': 0, 'dir': 1}
 
     while True:
-        for event in pygame.event.get():
-            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                pygame.quit()
-                sys.exit()
-            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
+        if not input_queue.empty():
+            restart = input_queue.get()
+            if restart:
                 # make first flap sound and return values for mainGame
-                SOUNDS['wing'].play()
+                output_queue.put(None)
+                if mode == 'test':
+                    SOUNDS['wing'].play()
                 return {
                     'playery': playery + playerShmVals['val'],
                     'basex': basex,
                     'playerIndexGen': playerIndexGen,
                 }
+            else:
+                pygame.quit()
+                sys.exit()
 
         # adjust playery, playerIndex, basex
         if (loopIter + 1) % 5 == 0:
@@ -226,22 +248,25 @@ def mainGame(movementInfo):
     playerFlapAcc =  -9   # players speed on flapping
     playerFlapped = False # True when player flaps
 
-
+    c = 0
+    pixels = None
     while True:
-        for event in pygame.event.get():
-            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
-                pygame.quit()
-                sys.exit()
-            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
-                if playery > -2 * IMAGES['player'][0].get_height():
-                    playerVelY = playerFlapAcc
-                    playerFlapped = True
-                    SOUNDS['wing'].play()
-
         # check for crash here
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
                                upperPipes, lowerPipes)
+
+        playerFlapped = input_queue.get()
+        if playerFlapped is True:
+            if playery > -2 * IMAGES['player'][0].get_height():
+                playerVelY = playerFlapAcc
+                if mode == 'test':
+                    SOUNDS['wing'].play()
+            else: #TODO: Make this less hacky, made it count as a crash if going hitting top.
+                crashTest = [True,True]
+
+
         if crashTest[0]:
+            output_queue.put((pixels[:,:400], -1, True))  # TODO: Change this to be more general.
             return {
                 'y': playery,
                 'groundCrash': crashTest[1],
@@ -254,12 +279,15 @@ def mainGame(movementInfo):
             }
 
         # check for score
+        reward = 0.1
         playerMidPos = playerx + IMAGES['player'][0].get_width() / 2
         for pipe in upperPipes:
             pipeMidPos = pipe['x'] + IMAGES['pipe'][0].get_width() / 2
             if pipeMidPos <= playerMidPos < pipeMidPos + 4:
                 score += 1
-                SOUNDS['point'].play()
+                reward += 5
+                if mode == 'test':
+                    SOUNDS['point'].play()
 
         # playerIndex basex change
         if (loopIter + 1) % 3 == 0:
@@ -308,17 +336,23 @@ def mainGame(movementInfo):
 
         SCREEN.blit(IMAGES['base'], (basex, BASEY))
         # print score so player overlaps the score
-        showScore(score)
+        # showScore(score)
 
         # Player rotation has a threshold
         visibleRot = playerRotThr
         if playerRot <= playerRotThr:
             visibleRot = playerRot
-        
+
         playerSurface = pygame.transform.rotate(IMAGES['player'][playerIndex], visibleRot)
         SCREEN.blit(playerSurface, (playerx, playery))
 
+        c += 1
+        pixels = pygame.surfarray.array2d(SCREEN) #TODO: Change this to use pixels2d for speed?
+        output_queue.put((pixels,reward,False)) #TODO: Change this to be more general.
+
+
         pygame.display.update()
+
         FPSCLOCK.tick(FPS)
 
 
@@ -338,18 +372,21 @@ def showGameOverScreen(crashInfo):
     upperPipes, lowerPipes = crashInfo['upperPipes'], crashInfo['lowerPipes']
 
     # play hit and die sounds
-    SOUNDS['hit'].play()
+    if mode == 'test':
+        SOUNDS['hit'].play()
     if not crashInfo['groundCrash']:
-        SOUNDS['die'].play()
+        if mode == 'test':
+            SOUNDS['die'].play()
 
     while True:
-        for event in pygame.event.get():
-            if event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE):
+        if not input_queue.empty():
+            restart = input_queue.get()
+            if restart:
+                # if playery + playerHeight >= BASEY - 1:
+                return
+            else:
                 pygame.quit()
                 sys.exit()
-            if event.type == KEYDOWN and (event.key == K_SPACE or event.key == K_UP):
-                if playery + playerHeight >= BASEY - 1:
-                    return
 
         # player y shift
         if playery + playerHeight < BASEY - 1:

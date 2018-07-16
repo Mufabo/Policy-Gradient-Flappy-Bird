@@ -1,28 +1,76 @@
-FlappyBirdClone
+Policy Gradient Flappy Bird
 ===============
 
-A Flappy Bird Clone made using [python-pygame][1]
+Policy Gradient based Deep Reinforcement Learning agent for Flappy Bird, based upon [sourabhv's FlapPyBird implementation](https://github.com/sourabhv/FlapPyBird).
 
-How-to
+
+Requirements
 ------
 
-1. Install Python 2.7.X or 3.5.x from [here](https://www.python.org/download/releases/)
+* Python 3, with packages:
+  * NumPy
+  * Multiprocessing
+  * Matplotlib
+  * PyGame
+  * PyTorch
 
-2. Install PyGame 1.9.X from [here](http://www.pygame.org/download.shtml)
 
-3. Clone this repository: `git clone https://github.com/sourabhv/FlappyBirdClone.git` or click `Download ZIP` in right panel and extract it.
+Flappy Bird Modifications
+------
 
-4. Run `python flappy.py` from the repo's directory
+In order to make use of sourabhv's repository for a RL agent, I first had to modify the files so that the input would no longer be given by button presses, but could be instead fed directly from an agent.
+To do this, I created a input and output queues using `multiprocessing.Queue()`, and replaced key presses in [flappy.py](flappy.py) with commands taken from the input queue.
+Once the action was completed, the new `state`, `reward`, and `done` status is returned to the agent via the output queue.
 
-5. use <kbd>&uarr;</kbd> or <kbd>Space</kbd> key to play and <kbd>Esc</kbd> to close the game.
+In addition to the above, I created a train mode where the background and ground are replaced by black textures, random pipe and bird colours are removed, and all sounds are removed.
+In test mode, these features remain as they originally were.
 
-  (Note: Install pyGame for same version python as above)
+I also fixed a bug where flying too high up allowed the user to score infinite points with ease (thanks to my agent finding it through exploration).
 
-  (For x64 windows, get exe [here](http://www.lfd.uci.edu/~gohlke/pythonlibs/#pygame))
 
-ScreenShot
+Rewards
+------
+
+I've currently defined the rewards returned by [flappy.py](flappy.py) like so:
+* +0.1 for surviving a step
+* +5.1 for scoring a point (passing through a set of pipes)
+* -1 for dying
+
+These were chosen kind of arbitrarily, and it'd be interesting to see how modifying these affects training time.
+
+
+Pre-trained Model
+------
+
+Training can be performed using the [controller.py](controller.py) file, however a pre-trained model is also provided for convenience.
+
+The pre-trained model, [model/trained-model.py](model/trained-model.py), was trained using a 4-layer network (all fully-connected):
+
+1. 72*100 x 300, with ReLU activation
+2. 300 x 300, with ReLU activation
+3. 300 x 300, with ReLU activation
+4. 300 x 1, with sigmoid activation
+
+The model was trained for approx. 7,000 iterations before stopping due to time constraints, using the Adam optimiser with 1e-4 learn rate, gamma = 0.99 discount factor, a batch size of 25, and negative log loss.
+
+The state is retrieved from PyGame as a 288 x 512 matrix, before being chopped to a 288 x 400 matrix to remove the ground below the pipes, and then downsampled to a quarter the size, giving 72 x 100.
+
+The output is the probability of flapping given the input state.
+
+Here's the graph of survival time vs number of episodes during training:
+
+![Training Graph](training-graph.png)
+
+
+Demo
+------
+
+A demo can be run using the pre-trained model by running the [demo.py](demo.py) file. By default the demo will run 10 episodes.
+
+An example of how to load [model/trained-model.py](model/trained-model.py) can also be seen in this file.
+
+
+Game Screenshot
 ----------
 
 ![Flappy Bird](screenshot1.png)
-
-[1]: http://www.pygame.org
