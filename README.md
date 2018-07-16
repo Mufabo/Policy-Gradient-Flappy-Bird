@@ -17,7 +17,7 @@ Requirements
 
 File Description
 -----
-* [controller.py](controller.py) - This is the file that is responsible for training the agent.
+* [controller.py](controller.py) - This is the file that is responsible for training the agent, and contains all of the meaty code that's worth looking at (which is also heavily commented).
 * [demo.py](demo.py) - This file shows by default 10 episodes using the pre-trained model [model/trained-model.pt](model/trained-model.pt).
 * [flappy.py](flappy.py) - This file is responsible for running and displaying the game.
 
