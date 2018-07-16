@@ -88,3 +88,5 @@ In future I'd like to:
 * Parallelise the game runs in each batch
 * Experiment with different network parameters
 * Experiment with different rewards
+* Train for longer
+* Try with higher difficulty (less distance between pipes)
