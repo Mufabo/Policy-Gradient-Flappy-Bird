@@ -80,12 +80,6 @@ Here's an example of how one episode might look:
 An example of how to load [model/trained-model.pt](model/trained-model.pt) can also be seen in this file.
 
 
-Game Screenshot
-----------
-
-![Flappy Bird](screenshot1.png)
-
-
 Future Work
 ------
 
