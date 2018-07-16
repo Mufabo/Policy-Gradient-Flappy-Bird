@@ -15,6 +15,13 @@ Requirements
   * PyTorch
 
 
+File Description
+-----
+* [controller.py](controller.py) - This is the file that is responsible for training the agent.
+* [demo.py](demo.py) - This file shows by default 10 episodes using the pre-trained model [model/trained-model.pt](model/trained-model.pt).
+* [flappy.py](flappy.py) - This file is responsible for running and displaying the game.
+
+
 Flappy Bird Modifications
 ------
 
@@ -44,7 +51,7 @@ Pre-trained Model
 
 Training can be performed using the [controller.py](controller.py) file, however a pre-trained model is also provided for convenience.
 
-The pre-trained model, [model/trained-model.py](model/trained-model.py), was trained using a 4-layer network (all fully-connected):
+The pre-trained model, [model/trained-model.pt](model/trained-model.pt), was trained using a 4-layer network (all fully-connected):
 
 1. 72*100 x 300, with ReLU activation
 2. 300 x 300, with ReLU activation
@@ -67,10 +74,20 @@ Demo
 
 A demo can be run using the pre-trained model by running the [demo.py](demo.py) file. By default the demo will run 10 episodes.
 
-An example of how to load [model/trained-model.py](model/trained-model.py) can also be seen in this file.
+An example of how to load [model/trained-model.pt](model/trained-model.pt) can also be seen in this file.
 
 
 Game Screenshot
 ----------
 
 ![Flappy Bird](screenshot1.png)
+
+
+Future Work
+------
+
+In future I'd like to:
+
+* Parallelise the game runs in each batch
+* Experiment with different network parameters
+* Experiment with different rewards
