@@ -91,7 +91,6 @@ def main(num_episodes=500000):
     batch_size = 25  # Number of episodes to run before updating net parameters
     learning_rate = 1e-4  # Learning rate used to scale gradient updates
     gamma = 0.99  # Discount factor when accumulating future rewards
-    mode = 'train'  # Mode to input to game to remove sounds, background, and random bird/pipe colours
 
     # Network initialisation:
     agent = Net()  # Define agent as an object of class Net (defined above)
@@ -103,7 +102,7 @@ def main(num_episodes=500000):
     output_queue = mp.Queue()
 
     # Start game on a separate process:
-    p = mp.Process(target=flappy.main, args=(mode, input_queue, output_queue))
+    p = mp.Process(target=flappy.main, args=(input_queue, output_queue))
     p.start()
 
     # Initialise storage variables and counters:
@@ -129,7 +128,10 @@ def main(num_episodes=500000):
             action = prob_dist.sample()  # Sample action from probability distribution
             log_prob = prob_dist.log_prob(action)  # Store log probability of action
 
-            input_queue.put(action.data[0].numpy() == 1)  # If action is 1, input True; otherwise, False
+            if action == 1:
+                input_queue.put(True) # If action is 1, input True
+            else:
+                input_queue.put(False)  # Otherwise, False
 
             state, reward, done = output_queue.get()  # Get resulting state and reward from above action
 

@@ -29,8 +29,7 @@ In order to make use of sourabhv's repository for a RL agent, I first had to mod
 To do this, I created a input and output queues using `multiprocessing.Queue()`, and replaced key presses in [flappy.py](flappy.py) with commands taken from the input queue.
 Once the action was completed, the new `state`, `reward`, and `done` status is returned to the agent via the output queue.
 
-In addition to the above, I created a train mode where the background and ground are replaced by black textures, random pipe and bird colours are removed, and all sounds are removed.
-In test mode, these features remain as they originally were.
+In addition to the above, for training purposes I replaced the background and ground by black textures, removed random pipe and bird colours, and removed all sounds.
 
 I also fixed a bug where flying too high up allowed the user to score infinite points with ease (thanks to my agent finding it through exploration).
 
@@ -73,6 +72,10 @@ Demo
 ------
 
 A demo can be run using the pre-trained model by running the [demo.py](demo.py) file. By default the demo will run 10 episodes.
+
+Here's an example of how one episode might look:
+
+![Agent Demo](example.gif)
 
 An example of how to load [model/trained-model.pt](model/trained-model.pt) can also be seen in this file.
 

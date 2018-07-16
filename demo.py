@@ -42,16 +42,15 @@ def preprocess(state):
 def main(num_episodes=10):
 
     agent = Net()
-    state = torch.load('model/trained-model.pt')
+    state = torch.load('model/trained-model')
     agent.load_state_dict(state['state_dict'])
     agent.eval()
 
-    mode = 'test'
     input_queue = mp.Queue()
     output_queue = mp.Queue()
 
     for episode in range(num_episodes):
-        p = mp.Process(target=flappy.main, args=(mode, input_queue, output_queue))
+        p = mp.Process(target=flappy.main, args=(input_queue, output_queue))
         p.start()
 
         input_queue.put(True)  # This starts next episode
@@ -67,7 +66,11 @@ def main(num_episodes=10):
             prob_dist = Bernoulli(flap_probability)  # Generate Bernoulli distribution with given probability
             action = prob_dist.sample()  # Sample action from probability distribution
 
-            input_queue.put(action.data[0].numpy() == 1)  # If action is 1, input True; otherwise, False
+            if action == 1:
+                input_queue.put(True) # If action is 1, input True
+            else:
+                input_queue.put(False)  # Otherwise, False
+
             state, reward, done = output_queue.get()  # Get resulting state and reward from above action
 
             episode_reward += reward  # Increase current episode's reward counter

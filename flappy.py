@@ -65,11 +65,10 @@ except NameError:
     xrange = range
 
 
-def main(mode_, in_q, out_q):
-    global SCREEN, FPSCLOCK, mode, input_queue, output_queue
+def main(in_q, out_q):
+    global SCREEN, FPSCLOCK, input_queue, output_queue
     # This is done to make the queues accessible to child functions:
     input_queue, output_queue = in_q, out_q
-    mode = mode_
 
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
@@ -95,10 +94,7 @@ def main(mode_, in_q, out_q):
     # message sprite for welcome screen
     IMAGES['message'] = pygame.image.load('assets/sprites/message.png').convert_alpha()
     # base (ground) sprite
-    if mode == 'test':
-        IMAGES['base'] = pygame.image.load('assets/sprites/base.png').convert_alpha()
-    else:
-        IMAGES['base'] = pygame.image.load('assets/sprites/base-test.png').convert_alpha()
+    IMAGES['base'] = pygame.image.load('assets/sprites/base-train.png').convert_alpha()
 
     # SOUNDS
     if 'win' in sys.platform:
@@ -113,16 +109,9 @@ def main(mode_, in_q, out_q):
     SOUNDS['wing']   = pygame.mixer.Sound('assets/audio/wing' + soundExt)
 
     while True:
-        # select random background, player, pipe sprites if in 'test' mode:
-        if mode == 'test':
-            randPlayer = random.randint(0, len(PLAYERS_LIST) - 1)
-            randBg = random.randint(0, len(BACKGROUNDS_LIST) - 1)
-            pipeindex = random.randint(0, len(PIPES_LIST) - 1)
-            IMAGES['background'] = pygame.image.load(BACKGROUNDS_LIST[randBg]).convert()
-        else:
-            randPlayer = 0
-            pipeindex = 0
-            IMAGES['background'] = pygame.image.load('assets/sprites/background-test.png').convert()
+        randPlayer = 0
+        pipeindex = 0
+        IMAGES['background'] = pygame.image.load('assets/sprites/background-train.png').convert()
 
 
         IMAGES['player'] = (
@@ -182,8 +171,6 @@ def showWelcomeAnimation():
             if restart:
                 # make first flap sound and return values for mainGame
                 output_queue.put(None)
-                if mode == 'test':
-                    SOUNDS['wing'].play()
                 return {
                     'playery': playery + playerShmVals['val'],
                     'basex': basex,
@@ -259,8 +246,7 @@ def mainGame(movementInfo):
         if playerFlapped is True:
             if playery > -2 * IMAGES['player'][0].get_height():
                 playerVelY = playerFlapAcc
-                if mode == 'test':
-                    SOUNDS['wing'].play()
+
             else: #TODO: Make this less hacky, made it count as a crash if going hitting top.
                 crashTest = [True,True]
 
@@ -286,8 +272,6 @@ def mainGame(movementInfo):
             if pipeMidPos <= playerMidPos < pipeMidPos + 4:
                 score += 1
                 reward += 5
-                if mode == 'test':
-                    SOUNDS['point'].play()
 
         # playerIndex basex change
         if (loopIter + 1) % 3 == 0:
@@ -371,12 +355,6 @@ def showGameOverScreen(crashInfo):
 
     upperPipes, lowerPipes = crashInfo['upperPipes'], crashInfo['lowerPipes']
 
-    # play hit and die sounds
-    if mode == 'test':
-        SOUNDS['hit'].play()
-    if not crashInfo['groundCrash']:
-        if mode == 'test':
-            SOUNDS['die'].play()
 
     while True:
         if not input_queue.empty():
