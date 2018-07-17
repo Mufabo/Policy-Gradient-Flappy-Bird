@@ -93,3 +93,4 @@ In future I'd like to:
 * Try with higher difficulty (less distance between pipes)
 * See how using background & ground sprites affects learning
 * See how using random bird & pipe colours affects learning
+* Try using other architectures, such as convnets
