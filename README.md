@@ -90,3 +90,5 @@ In future I'd like to:
 * Experiment with different rewards
 * Train for longer
 * Try with higher difficulty (less distance between pipes)
+* See how using background & ground sprites affects learning
+* See how using random bird & pipe colours affects learning
