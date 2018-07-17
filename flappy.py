@@ -13,6 +13,7 @@ from pygame.locals import *
 #       ** Changed input method from using keyboard, to using input_queue
 #       ** State, reward, and done status are outputted into output_queue
 #       *** Fixed a bug where flying too far over the pipes wouldn't count as crashing
+#       *** Added pygame.event.get() to main game while loop to ensure window doesn't stop responding.
 
 FPS = 30
 SCREENWIDTH  = 288
@@ -238,6 +239,7 @@ def mainGame(movementInfo):
     c = 0
     pixels = None
     while True:
+        pygame.event.get() # Make sure that OS doesn't think game stopped responding
         # check for crash here
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
                                upperPipes, lowerPipes)
