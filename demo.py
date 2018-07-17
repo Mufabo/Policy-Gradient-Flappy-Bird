@@ -49,9 +49,10 @@ def main(num_episodes=10):
     input_queue = mp.Queue()
     output_queue = mp.Queue()
 
+    p = mp.Process(target=flappy.main, args=(input_queue, output_queue))
+    p.start()
+
     for episode in range(num_episodes):
-        p = mp.Process(target=flappy.main, args=(input_queue, output_queue))
-        p.start()
 
         input_queue.put(True)  # This starts next episode
         output_queue.get()  # Gets blank response to confirm episode started
@@ -75,11 +76,12 @@ def main(num_episodes=10):
 
             episode_reward += reward  # Increase current episode's reward counter
 
-        print('Episode {}  || Reward: {}'.format(episode, episode_reward))
+        print('Episode {}  || Reward: {:.1f}'.format(episode, episode_reward))
 
-        time.sleep(2)
-        p.terminate()  # Close current instance, to avoid freezing if another window is selected
+        time.sleep(2) # Wait so user can see score
+        input_queue.put(True) # Reset the game
 
+    p.terminate()
 
 if __name__ == "__main__":
     main()
