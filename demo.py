@@ -42,7 +42,7 @@ def preprocess(state):
 def main(num_episodes=10):
 
     agent = Net()
-    state = torch.load('model/trained-model')
+    state = torch.load('model/trained-model.pt')
     agent.load_state_dict(state['state_dict'])
     agent.eval()
 
