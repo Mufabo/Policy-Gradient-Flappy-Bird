@@ -86,6 +86,7 @@ Future Work
 In future I'd like to:
 
 * Parallelise the game runs in each batch
+* Look into running without PyGame GUI for faster training
 * Experiment with different network parameters
 * Experiment with different rewards
 * Train for longer
