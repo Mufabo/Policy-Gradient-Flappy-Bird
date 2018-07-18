@@ -254,7 +254,7 @@ def mainGame(movementInfo):
 
 
         if crashTest[0]:
-            output_queue.put((pixels[:,:400], -1, True))  # TODO: Change this to be more general.
+            output_queue.put((pixels, -1, True))  # TODO: Change this to be more general.
             return {
                 'y': playery,
                 'groundCrash': crashTest[1],
