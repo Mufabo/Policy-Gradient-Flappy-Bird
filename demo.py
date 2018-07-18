@@ -41,6 +41,8 @@ def preprocess(state):
 
 def main(num_episodes=10):
 
+    mode = 'test'
+
     agent = Net()
     state = torch.load('model/trained-model.pt')
     agent.load_state_dict(state['state_dict'])
@@ -49,10 +51,11 @@ def main(num_episodes=10):
     input_queue = mp.Queue()
     output_queue = mp.Queue()
 
-    p = mp.Process(target=flappy.main, args=(input_queue, output_queue))
+    p = mp.Process(target=flappy.main, args=(input_queue, output_queue, mode))
     p.start()
 
     for episode in range(num_episodes):
+        st = time.time()
 
         input_queue.put(True)  # This starts next episode
         output_queue.get()  # Gets blank response to confirm episode started
@@ -76,10 +79,10 @@ def main(num_episodes=10):
 
             episode_reward += reward  # Increase current episode's reward counter
 
-        print('Episode {}  || Reward: {:.1f}'.format(episode, episode_reward))
+        print('Episode {}  || Reward: {:.1f}  || Time/Reward: {}'.format(episode, episode_reward,(time.time()-st)/episode_reward))
 
-        time.sleep(2) # Wait so user can see score
-        input_queue.put(True) # Reset the game
+        time.sleep(2)
+        input_queue.put(True)
 
     p.terminate()
 
