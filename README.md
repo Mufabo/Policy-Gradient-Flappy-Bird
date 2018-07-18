@@ -29,7 +29,7 @@ In order to make use of sourabhv's repository for a RL agent, I first had to mod
 To do this, I created a input and output queues using `multiprocessing.Queue()`, and replaced key presses in [flappy.py](flappy.py) with commands taken from the input queue.
 Once the action was completed, the new `state`, `reward`, and `done` status is returned to the agent via the output queue.
 
-In addition to the above, for training purposes I replaced the background and ground by black textures, removed random pipe and bird colours, and removed all sounds.
+In addition to the above, for training purposes I replaced the background and ground by black textures, removed random pipe and bird colours, and removed all sounds. Also for training purposes I removed the FPS limitation for training mode, leaving the FPS as 30 for test mode for viewability.
 
 I also fixed a bug where flying too high up allowed the user to score infinite points with ease (thanks to my agent finding it through exploration).
 
