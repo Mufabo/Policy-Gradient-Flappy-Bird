@@ -1,8 +1,15 @@
 from itertools import cycle
 import random
-import sys
+import sys, os
 import pygame
 from pygame.locals import *
+
+# If you want to disable the display:
+    # os.environ["SDL_VIDEODRIVER"] = "dummy"
+    # import pygame.display
+    # pygame.display.init()
+    # screen = pygame.display.set_mode((1,1))
+
 
 # NOTE:
 #   Modifications made by myself (Daniel Crane) include:
@@ -13,9 +20,7 @@ from pygame.locals import *
 #       ** Changed input method from using keyboard, to using input_queue
 #       ** State, reward, and done status are outputted into output_queue
 #       *** Fixed a bug where flying too far over the pipes wouldn't count as crashing
-#       *** Added pygame.event.get() to main game while loop to ensure window doesn't stop responding.
 
-FPS = 30
 SCREENWIDTH  = 288
 SCREENHEIGHT = 512
 # amount by which base can maximum shift to left
@@ -66,10 +71,15 @@ except NameError:
     xrange = range
 
 
-def main(in_q, out_q):
-    global SCREEN, FPSCLOCK, input_queue, output_queue
+def main(in_q, out_q, mode):
+    global SCREEN, FPSCLOCK, input_queue, output_queue, FPS
     # This is done to make the queues accessible to child functions:
     input_queue, output_queue = in_q, out_q
+
+    if mode == 'train':
+        FPS = 0
+    elif mode == 'test':
+        FPS = 30
 
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
@@ -239,7 +249,7 @@ def mainGame(movementInfo):
     c = 0
     pixels = None
     while True:
-        pygame.event.get() # Make sure that OS doesn't think game stopped responding
+        pygame.event.get()
         # check for crash here
         crashTest = checkCrash({'x': playerx, 'y': playery, 'index': playerIndex},
                                upperPipes, lowerPipes)
