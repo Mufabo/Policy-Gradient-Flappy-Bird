@@ -1,3 +1,4 @@
+import time
 import multiprocessing as mp
 import numpy as np
 import flappy
@@ -91,6 +92,7 @@ def main(num_episodes=500000):
     batch_size = 25  # Number of episodes to run before updating net parameters
     learning_rate = 1e-4  # Learning rate used to scale gradient updates
     gamma = 0.99  # Discount factor when accumulating future rewards
+    mode = 'train'
 
     # Network initialisation:
     agent = Net()  # Define agent as an object of class Net (defined above)
@@ -102,7 +104,7 @@ def main(num_episodes=500000):
     output_queue = mp.Queue()
 
     # Start game on a separate process:
-    p = mp.Process(target=flappy.main, args=(input_queue, output_queue))
+    p = mp.Process(target=flappy.main, args=(input_queue, output_queue, mode))
     p.start()
 
     # Initialise storage variables and counters:
@@ -111,6 +113,7 @@ def main(num_episodes=500000):
     batch_final_rewards = []  # This variable is used for deciding when to save
     best_batch_median = 0  # Variable to determine best model so far, for saving
 
+    st = time.time()
     for episode in range(1, num_episodes):  # Start episode at 1 for easier batch management with % later
         input_queue.put(True)  # This starts next episode
         output_queue.get()  # Gets blank response to confirm episode started
@@ -174,6 +177,8 @@ def main(num_episodes=500000):
                 # state = torch.load(filepath)
                 # agent.load_state_dict(state['state_dict']), opt.load_state_dict(state['optimizer'])
 
+            print('Batch Time Taken: {:.2f}s'.format(time.time()-st))
+            st = time.time()
             batch_log_prob, batch_rewards = [], []  # Reset batch log probabilities and rewards
             batch_final_rewards = []  # Reset end reward for each episode in batch
 
