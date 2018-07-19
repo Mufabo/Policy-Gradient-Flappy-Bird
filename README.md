@@ -38,11 +38,10 @@ Rewards
 ------
 
 I've currently defined the rewards returned by [flappy.py](flappy.py) like so:
-* +0.1 for surviving a step
-* +5.1 for scoring a point (passing through a set of pipes)
+* +1 for scoring a point (passing through a set of pipes)
 * -1 for dying
 
-These were chosen kind of arbitrarily, and it'd be interesting to see how modifying these affects training time.
+These were chosen kind of arbitrarily, and it'd be interesting to see how modifying these affects training.
 
 
 Pre-trained Model
