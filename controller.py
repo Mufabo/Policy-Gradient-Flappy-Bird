@@ -83,8 +83,7 @@ def main(num_episodes=500000):
     # Notes:
     #   'state' is a 2d array containing a 288x512 matrix of integers (the frames are rotated by PyGame)
     #   'reward' is defined as:
-    #                       +0.1 for step
-    #                       +5.1 for scoring a point (getting through a pipe)
+    #                       +1 for scoring a point (getting through a pipe)
     #                       -1 for dying
     #   'done' is True upon dying, signifying the end of the episode
 
