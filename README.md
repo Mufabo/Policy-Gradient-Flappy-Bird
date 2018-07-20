@@ -84,11 +84,9 @@ Future Work
 
 In future I'd like to:
 
-* Parallelise the game runs in each batch
-* Look into running without PyGame GUI for faster training
+* Experiment with different gamma values
 * Experiment with different network parameters
 * Experiment with different rewards
-* Train for longer
 * Try with higher difficulty (less distance between pipes)
 * See how using background & ground sprites affects learning
 * See how using random bird & pipe colours affects learning
