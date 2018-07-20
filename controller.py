@@ -46,6 +46,7 @@ def plot_durations(episode_durations, batch_size):
         batch_medians += [batch_median]*batch_size
 
     plt.plot(batch_medians)
+    plt.yscale('log')
     plt.pause(0.001)  # Allow plot to update
 
 
@@ -79,7 +80,7 @@ def preprocess(state):
     return torch.from_numpy(state).float()  # Return state in format required by PyTorch
 
 
-def main(num_episodes=500000):
+def main(num_batches=10000):
     # Notes:
     #   'state' is a 2d array containing a 288x512 matrix of integers (the frames are rotated by PyGame)
     #   'reward' is defined as:
@@ -113,76 +114,79 @@ def main(num_episodes=500000):
     best_batch_median = 0  # Variable to determine best model so far, for saving
 
     st = time.time()
-    for episode in range(1, num_episodes):  # Start episode at 1 for easier batch management with % later
-        input_queue.put(True)  # This starts next episode
-        output_queue.get()  # Gets blank response to confirm episode started
-        input_queue.put(False)  # Input initial action as no flap
-        state, reward, done = output_queue.get()  # Get initial state
+    for batch in range(num_batches):
+        for episode in range(batch_size):  # Start episode at 1 for easier batch management with % later
+            input_queue.put(True)  # This starts next episode
+            output_queue.get()  # Gets blank response to confirm episode started
+            input_queue.put(False)  # Input initial action as no flap
+            state, reward, done = output_queue.get()  # Get initial state
 
-        episode_steps = 0  # Number of steps taken in current episode
-        episode_reward = 0  # Amount of reward obtained from current episode
+            episode_steps = 0  # Number of steps taken in current episode
+            episode_reward = 0  # Amount of reward obtained from current episode
 
-        while not done:
-            state = preprocess(state)  # Preprocess the raw state data for usage with agent
-            flap_probability = agent(state)  # Forward pass state through network to get flap probability
+            while not done:
+                state = preprocess(state)  # Preprocess the raw state data for usage with agent
+                flap_probability = agent(state)  # Forward pass state through network to get flap probability
 
-            prob_dist = Bernoulli(flap_probability)  # Generate Bernoulli distribution with given probability
-            action = prob_dist.sample()  # Sample action from probability distribution
-            log_prob = prob_dist.log_prob(action)  # Store log probability of action
+                prob_dist = Bernoulli(flap_probability)  # Generate Bernoulli distribution with given probability
+                action = prob_dist.sample()  # Sample action from probability distribution
+                log_prob = prob_dist.log_prob(action)  # Store log probability of action
 
-            if action == 1:
-                input_queue.put(True) # If action is 1, input True
-            else:
-                input_queue.put(False)  # Otherwise, False
+                if action == 1:
+                    input_queue.put(True) # If action is 1, input True
+                else:
+                    input_queue.put(False)  # Otherwise, False
 
-            state, reward, done = output_queue.get()  # Get resulting state and reward from above action
+                state, reward, done = output_queue.get()  # Get resulting state and reward from above action
 
-            batch_log_prob.append(log_prob)  # Store the log probability for loss calculation
-            batch_rewards.append(reward)  # Store the reward obtained as a result of action
+                batch_log_prob.append(log_prob)  # Store the log probability for loss calculation
+                batch_rewards.append(reward)  # Store the reward obtained as a result of action
 
-            episode_reward += reward  # Increase current episode's reward counter
-            episode_steps += 1  # Increase number of steps taken on current episode
+                episode_reward += reward  # Increase current episode's reward counter
+                episode_steps += 1  # Increase number of steps taken on current episode
 
-        batch_final_rewards.append(episode_reward)
-        episode_durations.append(episode_steps)  # Include current episode's step count for plot
-        print('Episode {}  || Reward: {:.1f} || Steps: {} '.format(episode, episode_reward, episode_steps))
+            batch_final_rewards.append(episode_reward)
+            episode_durations.append(episode_steps)  # Include current episode's step count for plot
+            print('Batch {}, Episode {}  || Reward: {:.1f} || Steps: {} '.format(batch, episode, episode_reward, episode_steps))
+            input_queue.put(True)  # Reset the game.
 
-        if episode % batch_size == 0:
-            plot_durations(episode_durations, batch_size)  # Update plot to include current batch
-            discounted_rewards = discount_rewards(batch_rewards, gamma)  # Discount rewards with discount factor gamma
+        #Once batch of rollouts is complete:
 
-            opt.zero_grad()  # Zero gradients to clear existing data
+        plot_durations(episode_durations, batch_size)  # Update plot to include current batch
+        discounted_rewards = discount_rewards(batch_rewards, gamma)  # Discount rewards with discount factor gamma
 
-            for i in range(len(batch_log_prob)):
-                loss = -batch_log_prob[i]*discounted_rewards[i]  # Calculate negative log likelihood loss, scaled by reward
-                loss.backward()  # Backpropagate to calculate gradients
+        opt.zero_grad()  # Zero gradients to clear existing data
 
-            print('Updating network weights.')
-            opt.step()  # Update network weights using above accumulated gradients
+        for i in range(len(batch_log_prob)):
+            loss = -batch_log_prob[i]*discounted_rewards[i]  # Calculate negative log likelihood loss, scaled by reward
+            loss.backward()  # Backpropagate to calculate gradients
 
-            batch_median = np.median(batch_final_rewards)
-            # If current model has best median performance, save:
-            if batch_median > best_batch_median:
-                print('New best batch median {:.1f} (previously {:.1f}), saving network weights.'.format(batch_median, best_batch_median))
-                best_batch_median = batch_median
+        print('Updating network weights.')
+        opt.step()  # Update network weights using above accumulated gradients
 
-                state = {
-                    'state_dict': agent.state_dict(),
-                    'optimizer': opt.state_dict(),
-                }
-                torch.save(state, 'model/trained-model.pt')
+        batch_median = np.median(batch_final_rewards)
+        # If current model has best median performance, save:
+        if batch_median > best_batch_median:
+            print('New best batch median {} (previously {}), saving network weights.'.format(batch_median, best_batch_median))
+            best_batch_median = batch_median
 
-                # Load using:
-                # state = torch.load(filepath)
-                # agent.load_state_dict(state['state_dict']), opt.load_state_dict(state['optimizer'])
+            state = {
+                'state_dict': agent.state_dict(),
+                'optimizer': opt.state_dict(),
+            }
+            torch.save(state, 'model/trained-model.pt')
 
-            print('Batch Time Taken: {:.2f}s'.format(time.time()-st))
-            st = time.time()
-            batch_log_prob, batch_rewards = [], []  # Reset batch log probabilities and rewards
-            batch_final_rewards = []  # Reset end reward for each episode in batch
+            # Load using:
+            # state = torch.load(filepath)
+            # agent.load_state_dict(state['state_dict']), opt.load_state_dict(state['optimizer'])
 
-        if episode < num_episodes-1:  # If it's not final episode...
-            input_queue.put(True)  # ...reset the game.
+        else:
+            print('Batch Median Reward: {}'.format(batch_median))
+
+        print('Batch Size: {},  Time Taken: {:.2f}s'.format(batch_size,time.time()-st))
+        st = time.time()
+        batch_log_prob, batch_rewards = [], []  # Reset batch log probabilities and rewards
+        batch_final_rewards = []  # Reset end reward for each episode in batch
 
     p.terminate()  # Once all episodes are finished, terminate the process.
 
