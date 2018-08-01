@@ -62,7 +62,7 @@ The state is retrieved from PyGame as a 288 x 512 matrix, before being chopped t
 
 The output is the probability of flapping given the input state.
 
-Here's the graph of survival time vs number of episodes during training, with logarithmic scale in y:
+Here's the graph of survival time vs number of episodes during training, with logarithmic scale in y, and the orange line indicating the per-batch median score:
 
 ![Training Graph](training-graph.png)
 
