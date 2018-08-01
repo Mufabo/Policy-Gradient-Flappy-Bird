@@ -66,7 +66,7 @@ Here's the graph of survival time vs number of episodes during training, with lo
 
 ![Training Graph](training-graph.png)
 
-The best performing model can survive for on average approximately 500 time steps, corresponding to approximately 10 points.
+We can see from this figure that the first hurdle our agent had to overcome was surviving for more than 100 time steps, where the first pipe appears. After it overcomes this initial hurdle, it gradually starts to survive for longer and longer, with the best performing model can survive for on average approximately 500 time steps, corresponding to approximately 10 points.
 
 It's clear from the above plot that the model has yet to converge to a final state, and so with more training the performance will almost undoubtably improve.
 
