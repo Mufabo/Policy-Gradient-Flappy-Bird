@@ -68,7 +68,7 @@ Here's the graph of survival time vs number of episodes during training, with lo
 
 The best performing model can survive for on average approximately 500 time steps, corresponding to approximately 10 points.
 
-It's clear from the above plot, however, that the model has yet to converge to a final state, and so with more training the performance will almost undoubtable improve.
+It's clear from the above plot that the model has yet to converge to a final state, and so with more training the performance will almost undoubtably improve.
 
 
 Demo
